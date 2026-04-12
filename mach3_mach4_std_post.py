@@ -269,8 +269,16 @@ def export(objectslist, filename, argstring):
     if not filename == "-":
         # Ensure filename has the correct extension
         import os
-        if not filename.lower().endswith("." + OUTPUT_EXTENSION):
-            filename = os.path.splitext(filename)[0] + "." + OUTPUT_EXTENSION
+        original_filename = filename
+        # Strip any existing extension and force .tap
+        base_name = os.path.splitext(filename)[0]
+        filename = base_name + "." + OUTPUT_EXTENSION
+        
+        # Debug output
+        if original_filename != filename:
+            print(f"Changed extension: {original_filename} -> {filename}")
+        else:
+            print(f"Using filename: {filename}")
         
         gfile = pyopen(filename, "w")
         gfile.write(final)
