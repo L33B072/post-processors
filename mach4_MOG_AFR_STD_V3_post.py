@@ -102,6 +102,7 @@ MACHINE_NAME = "mach3_4"
 CORNER_MIN = {"x": 0, "y": 0, "z": 0}
 CORNER_MAX = {"x": 500, "y": 300, "z": 300}
 PRECISION = 4
+OUTPUT_EXTENSION = "tap"  # Output file extension
 
 # Preamble text will appear at the beginning of the GCODE output file.
 # PREAMBLE = """G17 G54 G40 G49 G80 G90 G64"""
@@ -281,6 +282,11 @@ def export(objectslist, filename, argstring):
     print("done postprocessing.")
 
     if not filename == "-":
+        # Ensure filename has the correct extension
+        import os
+        if not filename.lower().endswith("." + OUTPUT_EXTENSION):
+            filename = os.path.splitext(filename)[0] + "." + OUTPUT_EXTENSION
+        
         gfile = pyopen(filename, "w")
         gfile.write(final)
         gfile.close()
