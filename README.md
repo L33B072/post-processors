@@ -1,11 +1,24 @@
-# FreeCAD Post Processors for MOG Pattern & Machine Corp
+# Post Processors for MOG Pattern & Machine Corp
 
-Custom post processors for FreeCAD CAM (Path workbench) tailored for Mach3/Mach4 CNC controllers.
+Custom post processors for various CAM software packages tailored for MOG's CNC machines and controllers.
 
-## Post Processors
+## Overview
+
+This repository contains post processors for multiple CAM applications:
+- **FreeCAD** - Open-source parametric CAD/CAM
+- **Fusion 360** - Autodesk cloud-based CAD/CAM
+- Other CAM systems as needed
+
+All post processors are optimized for **Mach3/Mach4 CNC controllers** and MOG's specific machine requirements.
+
+---
+
+## FreeCAD Post Processors
 
 ### mach4_MOG_AFR_STD_V3_post.py
-**Recommended** - Full-featured post processor with advanced capabilities:
+**Application:** FreeCAD CAM (Path Workbench)  
+**Controller:** Mach4  
+**Status:** ✅ Recommended - Production Ready
 
 - **Arc Feed Rate Control** - Independent feed rate control for arc moves (G2/G3) vs linear moves (G1)
 - **Spindle Ramp-Up** - Automatic 10-second dwell after spindle start (M3/M4)
@@ -22,29 +35,37 @@ Custom post processors for FreeCAD CAM (Path workbench) tailored for Mach3/Mach4
 
 **Best for:** Foam cutting, finishing operations, projects requiring precise arc speed control
 
+---
+
 ### mach3_mach4_std_post.py
-Standard post processor with core functionality:
+**Application:** FreeCAD CAM (Path Workbench)  
+**Controller:** Mach3/Mach4  
+**Status:** ✅ Stable - General Purpose
 
 - Arc feed rate control
 - Spindle ramp-up dwell
 - G64 path blending
-- Standard preamble/postamble
+---
 
-**Best for:** General-purpose milling operations
+## Fusion 360 Post Processors
 
 ### ASTALA_M4Mill-G64-JUN2-spindle-ramp.cps
-Autodesk Fusion 360 / HSM post processor for reference:
+**Application:** Autodesk Fusion 360 / HSM  
+**Controller:** Mach4  
+**Reference implementation of Mach4 best practices
+- Spindle ramp-up timing examples
+- G64 path control mode configuration
+- JavaScript-based post processor format
 
-- Shows Mach4 best practices
-- Spindle ramp-up implementation
-- G64 path control mode
+**Note:** This is a reference file showing best practices that were adapted for FreeCAD posts.
 
-**Format:** JavaScript (.cps) - Not directly usable in FreeCAD
+---
+**Installation:**
+1. Copy the desired `.py` post processor file to your FreeCAD Macro directory
+2. Default location: `C:\Users\[YourUsername]\AppData\Roaming\FreeCAD\Macro\`
+3. Or reference directly in Job settings
 
-## Installation
-
-1. Copy the desired `.py` post processor file to your FreeCAD installation
-2. In FreeCAD, go to **Edit → Preferences → Path → Job Preferences**
+**Usage:**go to **Edit → Preferences → Path → Job Preferences**
 3. Note your "Default Post Processor" directory location
 4. Place the post processor in that directory (or reference it directly in Job settings)
 
@@ -53,19 +74,39 @@ Autodesk Fusion 360 / HSM post processor for reference:
 C:\Users\[YourUsername]\AppData\Roaming\FreeCAD\Macro\
 ```
 
-## Usage
-
-### In FreeCAD:
-
-1. Create your CAM Job and operations
+## Usage in FreeCAD
 2. Select the Job in the tree
-3. In the Job properties, set **PostProcessor** to the desired file:
+3. In **Job properties**, set **PostProcessor**:
    - `mach4_MOG_AFR_STD_V3_post` (recommended)
    - `mach3_mach4_std_post`
 4. Click **Post Process** to generate G-code
 
-### Using Arc Feed Rate Control:
+---
 
+### Fusion 360 Post Processors
+
+**Installation:**
+1. In Fusion 360, go to **Manufacture → Manage → Post Library**
+2. Click **Import** and select the `.cps` file
+3. Post will appear in your library
+
+**Usage:**
+1. Select your CAM setup
+2. Choose the post processor from the dropdown
+3. Click **Post Process** to generate G-code
+
+---
+
+## FreeCAD Feature: Arc Feed Rate Control (recommended)
+   - `mach3_mach4_std_post`
+4. Click **Post Process** to generate G-code
+
+### Using Arc Feed Rate Control:
+---
+
+## Configuration and Customization
+
+### FreeCAD Post Processor
 1. Create or select a Profile operation
 2. In the **Data** tab, find **ArcFeedRatePercent** property
 3. Set percentage (default 100%):
@@ -76,7 +117,7 @@ C:\Users\[YourUsername]\AppData\Roaming\FreeCAD\Macro\
 
 **Example:**
 - Profile horizontal feed rate: 500 in/min
-- ArcFeedRatePercent: 60%
+- A#rcFeedRatePercent: 60%
 - Result: G1 moves at 500 in/min, G2/G3 moves at 300 in/min
 
 ## Configuration Options
@@ -107,9 +148,56 @@ G90
 """
 ```
 
-**Lines 120-127** - POSTAMBLE:
-```python
-POSTAMBLE = """
+---
+FreeCAD post processors for comprehensive G-code and M-code reference covering:
+- Motion commands (G0-G4)
+- Coordinate systems and modes
+- Canned cycles
+- Spindle and coolant control
+- Mach4-specific features
+
+---
+
+## Version History
+
+### FreeCAD PostseCAD CAM Extensions](https://github.com/L33B072/FreeCAD_CAM_Extensions) for ArcFeedRatePercent property
+
+### Fusion 360
+- Fusion 360 with CAM workspace
+- Cloud or local post processor library access
+
+### CNC Controllers
+---
+
+## Adding New Post Processors
+
+To add post processors for other CAM systems:
+
+1. Create a new section in this README with:
+   - Application name
+   - Controller compatibility
+   - Status and purpose
+   - Installation instructions
+   - Usage notes
+2. Place the post processor file in this directory
+3. Commit with descriptive message
+4. Update version history if applicable
+
+---
+
+- Mach3 or Mach4 CNC controllerfor use with various CAM systems and Mach3/Mach4 controllers.
+
+---
+
+## Support and Contact
+
+**Company:** MOG Pattern & Machine Corp  
+**Internal Use:** Contact CAM administrator for customization requests  
+**External Users:** This repository may contain company-specific configurations
+
+---
+
+## Related Resource
 G17
 M05
 M9
