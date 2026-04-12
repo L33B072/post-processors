@@ -103,7 +103,7 @@ CORNER_MIN = {"x": 0, "y": 0, "z": 0}
 CORNER_MAX = {"x": 500, "y": 300, "z": 300}
 PRECISION = 4
 OUTPUT_EXTENSION = "tap"  # Output file extension
-PYEXT = "tap"  # Tell FreeCAD to use this extension in the save dialog
+EXTENSION = "tap"  # FreeCAD uses this for the save dialog default
 
 # Preamble text will appear at the beginning of the GCODE output file.
 PREAMBLE = """G17 G54 G40 G49 G80 G90 G64
