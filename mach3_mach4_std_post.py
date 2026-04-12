@@ -102,8 +102,6 @@ MACHINE_NAME = "mach3_4"
 CORNER_MIN = {"x": 0, "y": 0, "z": 0}
 CORNER_MAX = {"x": 500, "y": 300, "z": 300}
 PRECISION = 4
-OUTPUT_EXTENSION = "tap"  # Output file extension
-EXTENSION = "tap"  # FreeCAD uses this for the save dialog default
 
 # Preamble text will appear at the beginning of the GCODE output file.
 PREAMBLE = """G17 G54 G40 G49 G80 G90 G64
@@ -268,19 +266,6 @@ def export(objectslist, filename, argstring):
     print("done postprocessing.")
 
     if not filename == "-":
-        # Ensure filename has the correct extension
-        import os
-        original_filename = filename
-        # Strip any existing extension and force .tap
-        base_name = os.path.splitext(filename)[0]
-        filename = base_name + "." + OUTPUT_EXTENSION
-        
-        # Debug output
-        if original_filename != filename:
-            print(f"Changed extension: {original_filename} -> {filename}")
-        else:
-            print(f"Using filename: {filename}")
-        
         gfile = pyopen(filename, "w")
         gfile.write(final)
         gfile.close()
