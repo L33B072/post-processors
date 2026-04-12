@@ -1,0 +1,31 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# FreeCAD backup files
+*.FCBak
+*.FCStd1
+*.FCStd2
+
+# Test output files
+*.nc
+*.tap
+*.gcode
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Temporary files
+*.tmp
+*.temp
