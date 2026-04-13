@@ -309,6 +309,7 @@ def parse(pathobj):
     currLocation = {}  # keep track for no doubles
     lastFeedRate = None  # Track last feed rate to ensure F on every line
     spindleActive = False  # Track if spindle has been started in this operation
+    lastG0Move = None  # Track last G0 move to suppress duplicates
 
     # the order of parameters
     # mach3_4 doesn't want K properties on XY plane  Arcs need work.
@@ -528,6 +529,15 @@ def parse(pathobj):
                     out = []
                 else:
                     outstring.pop(0)  # remove the command
+
+            # Suppress duplicate consecutive G0 moves (common at operation boundaries)
+            if command in ["G0", "G00"]:
+                currentG0Move = " ".join(outstring)
+                if currentG0Move == lastG0Move:
+                    continue  # Skip this duplicate G0 move
+                lastG0Move = currentG0Move
+            else:
+                lastG0Move = None  # Reset if not a G0 move
 
             # prepend a line number and append a newline
             if len(outstring) >= 1:
