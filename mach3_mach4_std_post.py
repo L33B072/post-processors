@@ -292,7 +292,8 @@ def parse(pathobj):
     lastcommand = None
     precision_string = "." + str(PRECISION) + "f"
     currLocation = {}  # keep track for no doubles
-    lastFeedRate = None  # Track last feed rate to ensure F on every line
+    lastStoredFeedRate = None  # Track last feed rate from parameters
+    lastOutputFeedRate = None  # Track last feedrate actually output (for modal output)
     spindleActive = False  # Track if spindle has been started in this operation
     lastG0Move = None  # Track last G0 move to suppress duplicates
 
@@ -406,18 +407,21 @@ def parse(pathobj):
                                 if c.Name in ["G2", "G02", "G3", "G03"]:
                                     # Reduce feed rate by arcFeedRatePercent
                                     speedValue = speed.getValueAs(UNIT_SPEED_FORMAT) * (arcFeedRatePercent / 100.0)
-                                    lastFeedRate = speed  # Store original for G1 moves
+                                    lastStoredFeedRate = speed  # Store original for G1 moves
                                 else:
                                     speedValue = speed.getValueAs(UNIT_SPEED_FORMAT)
-                                    lastFeedRate = speed
-                                    
-                                outstring.append(
-                                    param
-                                    + format(
-                                        float(speedValue),
-                                        precision_string,
+                                    lastStoredFeedRate = speed
+                                
+                                # Only output F if it's different from the last output feedrate (modal)
+                                if lastOutputFeedRate is None or abs(speedValue - lastOutputFeedRate) > 0.001:
+                                    outstring.append(
+                                        param
+                                        + format(
+                                            float(speedValue),
+                                            precision_string,
+                                        )
                                     )
-                                )
+                                    lastOutputFeedRate = speedValue
                     elif param == "T":
                         outstring.append(param + str(int(c.Parameters["T"])))
                     elif param == "H":
@@ -439,22 +443,25 @@ def parse(pathobj):
                                 param + format(float(pos.getValueAs(UNIT_FORMAT)), precision_string)
                             )
             
-            # Force feed rate on every feed move (G1, G2, G3) even if F wasn't in parameters
+            # Add feed rate on feed moves if not in parameters (inherit from last move)
             if c.Name in ["G1", "G01", "G2", "G02", "G3", "G03"]:
-                if "F" not in c.Parameters and lastFeedRate is not None:
+                if "F" not in c.Parameters and lastStoredFeedRate is not None:
                     # Apply arc feed rate reduction for G2/G3 commands
                     if c.Name in ["G2", "G02", "G3", "G03"]:
-                        feedValue = lastFeedRate.getValueAs(UNIT_SPEED_FORMAT) * (arcFeedRatePercent / 100.0)
+                        feedValue = lastStoredFeedRate.getValueAs(UNIT_SPEED_FORMAT) * (arcFeedRatePercent / 100.0)
                     else:
-                        feedValue = lastFeedRate.getValueAs(UNIT_SPEED_FORMAT)
-                        
-                    outstring.append(
-                        "F"
-                        + format(
-                            float(feedValue),
-                            precision_string,
+                        feedValue = lastStoredFeedRate.getValueAs(UNIT_SPEED_FORMAT)
+                    
+                    # Only output F if it's different from the last output feedrate (modal)
+                    if lastOutputFeedRate is None or abs(feedValue - lastOutputFeedRate) > 0.001:
+                        outstring.append(
+                            "F"
+                            + format(
+                                float(feedValue),
+                                precision_string,
+                            )
                         )
-                    )
+                        lastOutputFeedRate = feedValue
 
             if adaptiveOp and c.Name in ["G0", "G00"]:
                 if opHorizRapid and opVertRapid:
