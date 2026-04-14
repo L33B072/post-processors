@@ -296,6 +296,11 @@ def parse(pathobj):
     lastOutputFeedRate = None  # Track last feedrate actually output (for modal output)
     spindleActive = False  # Track if spindle has been started in this operation
     lastG0Move = None  # Track last G0 move to suppress duplicates
+    
+    # Track initial G0 moves to reorder them (XY before Z)
+    initialG0Buffer = []
+    commandCount = 0
+    MAX_INITIAL_G0_COMMANDS = 5  # Only reorder the first few G0 commands
 
     # the order of parameters
     # mach3_4 doesn't want K properties on XY plane  Arcs need work.
@@ -375,9 +380,68 @@ def parse(pathobj):
                     )
 
         for c in PathUtils.getPathWithPlacement(pathobj).Commands:
+            commandCount += 1
 
             outstring = []
             command = c.Name
+            
+            # Buffer initial G0 moves to reorder them (XY before Z)
+            if command in ["G0", "G00"] and commandCount <= MAX_INITIAL_G0_COMMANDS and not adaptiveOp:
+                # Store this G0 command for potential reordering
+                initialG0Buffer.append(c)
+                continue  # Don't process yet, wait to collect all initial G0s
+            
+            # If we've moved past the initial G0 sequence, flush the buffer with reordering
+            if initialG0Buffer and (command not in ["G0", "G00"] or commandCount > MAX_INITIAL_G0_COMMANDS):
+                # Separate G0 moves into XY moves and Z-only moves
+                xyMoves = []
+                zMoves = []
+                
+                for g0cmd in initialG0Buffer:
+                    hasXY = "X" in g0cmd.Parameters or "Y" in g0cmd.Parameters
+                    hasZ = "Z" in g0cmd.Parameters
+                    hasOnlyZ = hasZ and not hasXY
+                    
+                    if hasOnlyZ:
+                        zMoves.append(g0cmd)
+                    else:
+                        xyMoves.append(g0cmd)
+                
+                # Output in order: XY moves first, then Z moves
+                for g0cmd in xyMoves + zMoves:
+                    bufferedOut = []
+                    bufferedOut.append(g0cmd.Name)
+                    
+                    # Add parameters in order
+                    for param in params:
+                        if param in g0cmd.Parameters:
+                            if param == "F" and g0cmd.Name in ["G0", "G00"]:
+                                continue  # mach3_4 doesn't use rapid speeds
+                            if param in ["X", "Y", "Z", "A", "B", "C", "I", "J"]:
+                                if (
+                                    (not OUTPUT_DOUBLES)
+                                    and (param in currLocation)
+                                    and (currLocation[param] == g0cmd.Parameters[param])
+                                ):
+                                    continue
+                                pos = Units.Quantity(g0cmd.Parameters[param], FreeCAD.Units.Length)
+                                bufferedOut.append(
+                                    param + format(float(pos.getValueAs(UNIT_FORMAT)), precision_string)
+                                )
+                    
+                    # Update current location
+                    currLocation.update(g0cmd.Parameters)
+                    
+                    # Output the buffered G0 move
+                    if len(bufferedOut) >= 1:
+                        if OUTPUT_LINE_NUMBERS:
+                            bufferedOut.insert(0, (linenumber()))
+                        for w in bufferedOut:
+                            out += w + COMMAND_SPACE
+                        out = out.strip() + "\n"
+                
+                # Clear the buffer
+                initialG0Buffer = []
 
             if adaptiveOp and c.Name in ["G0", "G00"]:
                 if opHorizRapid and opVertRapid:
@@ -540,6 +604,55 @@ def parse(pathobj):
                 for w in outstring:
                     out += w + COMMAND_SPACE
                 out = out.strip() + "\n"
+        
+        # Flush any remaining buffered G0 commands at end of operation
+        if initialG0Buffer:
+            # Separate G0 moves into XY moves and Z-only moves
+            xyMoves = []
+            zMoves = []
+            
+            for g0cmd in initialG0Buffer:
+                hasXY = "X" in g0cmd.Parameters or "Y" in g0cmd.Parameters
+                hasZ = "Z" in g0cmd.Parameters
+                hasOnlyZ = hasZ and not hasXY
+                
+                if hasOnlyZ:
+                    zMoves.append(g0cmd)
+                else:
+                    xyMoves.append(g0cmd)
+            
+            # Output in order: XY moves first, then Z moves
+            for g0cmd in xyMoves + zMoves:
+                bufferedOut = []
+                bufferedOut.append(g0cmd.Name)
+                
+                # Add parameters in order
+                for param in params:
+                    if param in g0cmd.Parameters:
+                        if param == "F" and g0cmd.Name in ["G0", "G00"]:
+                            continue  # mach3_4 doesn't use rapid speeds
+                        if param in ["X", "Y", "Z", "A", "B", "C", "I", "J"]:
+                            if (
+                                (not OUTPUT_DOUBLES)
+                                and (param in currLocation)
+                                and (currLocation[param] == g0cmd.Parameters[param])
+                            ):
+                                continue
+                            pos = Units.Quantity(g0cmd.Parameters[param], FreeCAD.Units.Length)
+                            bufferedOut.append(
+                                param + format(float(pos.getValueAs(UNIT_FORMAT)), precision_string)
+                            )
+                
+                # Update current location
+                currLocation.update(g0cmd.Parameters)
+                
+                # Output the buffered G0 move
+                if len(bufferedOut) >= 1:
+                    if OUTPUT_LINE_NUMBERS:
+                        bufferedOut.insert(0, (linenumber()))
+                    for w in bufferedOut:
+                        out += w + COMMAND_SPACE
+                    out = out.strip() + "\n"
 
         return out
 
