@@ -89,7 +89,7 @@ OUTPUT_LINE_NUMBERS = False
 SHOW_EDITOR = True
 MODAL = False  # if true commands are suppressed if the same as previous line.
 USE_TLO = True  # if true G43 will be output following tool changes
-OUTPUT_DOUBLES = False  # if false duplicate axis values are suppressed if the same as previous line.
+OUTPUT_DOUBLES = True  # Must be True for Mach4 compatibility - outputs all XYZ coordinates explicitly
 COMMAND_SPACE = " "
 LINENR = 100  # line number starting value
 
