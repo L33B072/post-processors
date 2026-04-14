@@ -609,6 +609,11 @@ def parse(pathobj):
                 lastG0Move = currentG0Move
             else:
                 lastG0Move = None  # Reset if not a G0 move
+            
+            # Skip G0/G00 commands with no coordinates (can happen with modal output)
+            if command in ["G0", "G00"] and len(outstring) == 1:
+                # Only has the command itself, no coordinates - skip it
+                continue
 
             # prepend a line number and append a newline
             if len(outstring) >= 1:
